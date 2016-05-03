@@ -646,6 +646,7 @@ int process()
 		MPI_Bcast(pca_U, PCA_U_LEN * 2, MPI_DOUBLE, 1, MPI_COMM_WORLD);
 
 		//perform data partition
+		logger->info("performing data partition");
 		if (MPI_RANK != 0) {
 				
 				logger->info("calculating projection of K-mer vector");
@@ -654,8 +655,6 @@ int process()
 				
 				for (int i = 0; i < THREAD_NUM; i++)
 					pthread_join(tid[i], NULL);
-				
-				logger->info("performing data partition");
 
 				double max_x=pca_x[0], 
 					   min_x=pca_x[0], 
@@ -722,13 +721,12 @@ int process()
 		//perform DP-means for clustering
 		result.push_back(vector<vector<long> >());
 
+		logger->info("performing DP-means for clustering ...");
 		if (MPI_RANK == 0) {
 			ansblockid();
 			seqlen = 0;
 
 		}else{
-
-			logger->info("performing DP-means for clustering ...");
 			for (int i = 0; i < THREAD_NUM; i++)
 				pthread_create(&tid[i], NULL, do_clustering, (void*) (long) i);
 
@@ -1147,6 +1145,8 @@ int main(int argc, char **argv)
 	//logger->info("Rank[%d] startup", rank);
 
 	read_fasta();
+	MPI_Barrier(MPI_COMM_WORLD);
+	
 	process();
 
 	logger->info("MPI_Rank[%d] return", MPI_RANK);
